@@ -1,0 +1,237 @@
+import { useState, useEffect } from 'react';
+
+interface CartItem {
+  id: number;
+  quantity: number;
+}
+
+interface OrderForm {
+  fullName: string;
+  phoneNumber: string;
+  address: string;
+  notes: string;
+}
+
+const generateStickers = () => {
+  const categories = ['Graffiti', 'Urban', 'Anime', 'Gaming', 'Music', 'Art', 'Street', 'Cool'];
+  const adjectives = ['Neon', 'Cyber', 'Urban', 'Retro', 'Epic', 'Cool', 'Fresh', 'Rad'];
+  const nouns = ['Skull', 'Flame', 'Star', 'Lightning', 'Crown', 'Rocket', 'Dragon', 'Phoenix', 'Tiger', 'Wolf', 'Unicorn', 'Ghost'];
+  
+  return Array.from({ length: 140 }, (_, i) => ({
+    id: i + 1,
+    name: `${adjectives[i % adjectives.length]} ${nouns[i % nouns.length]} #${i + 1}`,
+    category: categories[i % categories.length],
+    price: 12,
+    emoji: ['💀', '🔥', '⭐', '⚡', '👑', '🚀', '🐉', '🦅', '🌟', '🎸', '🎮', '💎', '🌈', '🍕', '🤘', '💪'][i % 16]
+  }));
+};
+
+const stickers = generateStickers();
+
+const translations = {
+  en: {
+    home: 'Home',
+    shop: 'Shop',
+    cart: 'Cart',
+    about: 'About',
+    contact: 'Contact',
+    addToCart: 'Add to Cart',
+    checkout: 'Checkout',
+    total: 'Total',
+    discount: 'Discount',
+    subtotal: 'Subtotal',
+    orderNow: 'Order Now',
+    fullName: 'Full Name',
+    phoneNumber: 'Phone Number',
+    address: 'Address',
+    notes: 'Notes (Optional)',
+    placeOrder: 'Place Order',
+    orderSuccess: '🎉 Order Placed Successfully!',
+    thankYou: 'Thank you for your order. We will contact you soon to confirm.',
+    continueShopping: 'Continue Shopping',
+    viewCart: 'View Cart',
+    yourCart: 'Your Cart',
+    emptyCart: 'Your cart is empty',
+    startShopping: 'Start Shopping',
+    size: 'Size',
+    proportional: '5 cm proportional',
+    streetCulture: 'Street Culture',
+    premiumStickers: 'Premium Stickers',
+    exploreCollection: 'Explore our collection of 140+ unique stickers designed for the street culture generation.',
+    buyNow: 'Buy Now',
+    bulkDiscount: '20+ stickers gets 10% off!',
+    aboutTitle: 'About SLAPZZ Stickers',
+    aboutText: 'SLAPZZ Stickers is your go-to destination for unique, high-quality stickers that let you express your individual style. Born from the underground street culture scene, we bring you designs that speak to the rebellious spirit within you.',
+    contactTitle: 'Get In Touch',
+    sendMessage: 'Send Message',
+    contactText: 'Have questions or want to collaborate? Reach out to us anytime!',
+    followUs: 'Follow us on social media',
+    allStickers: 'All Stickers',
+    filterBy: 'Filter by Category',
+    added: 'Added!',
+    quantity: 'Qty',
+    remove: 'Remove',
+    egp: 'EGP',
+    free: 'FREE',
+    shippingNote: 'Free shipping on all orders',
+    discountApplied: '10% Bulk Discount Applied!'
+  },
+  ar: {
+    home: 'الرئيسية',
+    shop: 'المتجر',
+    cart: 'السلة',
+    about: 'من نحن',
+    contact: 'اتصل بنا',
+    addToCart: 'أضف للسلة',
+    checkout: 'إتمام الشراء',
+    total: 'المجموع',
+    discount: 'الخصم',
+    subtotal: 'المجموع الفرعي',
+    orderNow: 'اطلب الآن',
+    fullName: 'الاسم الكامل',
+    phoneNumber: 'رقم الهاتف',
+    address: 'العنوان',
+    notes: 'ملاحظات (اختياري)',
+    placeOrder: 'تأكيد الطلب',
+    orderSuccess: '🎉 تم تأكيد الطلب بنجاح!',
+    thankYou: 'شكراً لطلبك. سنتواصل معك قريباً لتأكيد الطلب.',
+    continueShopping: 'متابعة التسوق',
+    viewCart: 'عرض السلة',
+    yourCart: 'سلتك',
+    emptyCart: 'السلة فارغة',
+    startShopping: 'ابدأ التسوق',
+    size: 'الحجم',
+    proportional: '5 سم متناسب',
+    streetCulture: 'ثقافة الشارع',
+    premiumStickers: 'ملصقات فاخرة',
+    exploreCollection: 'استكشف مجموعتنا من 140+ ملصق فريد مصمم لجيل ثقافة الشارع.',
+    buyNow: 'اشتري الآن',
+    bulkDiscount: '20+ ملصق = 10% خصم!',
+    aboutTitle: 'من نحن - SLAPZZ Stickers',
+    aboutText: 'SLAPZZ Stickers هي وجهتك الأولى للملصقات الفريدة عالية الجودة التي تجعلك تعبّر عن أسلوبك الخاص. وُلدت من ثقافة الشارع السرية، ونقدم لك تصاميم تتحدث عن الروح المتمردة بداخلك.',
+    contactTitle: 'تواصل معنا',
+    sendMessage: 'إرسال رسالة',
+    contactText: 'لديك أسئلة أو تريد التعاون؟ تواصل معنا في أي وقت!',
+    followUs: 'تابعنا على وسائل التواصل الاجتماعي',
+    allStickers: 'جميع الملصقات',
+    filterBy: 'تصفية حسب الفئة',
+    added: 'تمت الإضافة!',
+    quantity: 'الكمية',
+    remove: 'إزالة',
+    egp: 'جنيه',
+    free: 'مجاني',
+    shippingNote: 'شحن مجاني لجميع الطلبات',
+    discountApplied: 'تم تطبيق خصم 10%!'
+  }
+};
+
+export default function SlapzzStickers() {
+  const [language, setLanguage] = useState<'en' | 'ar'>('en');
+  const [currentSection, setCurrentSection] = useState('home');
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [showCart, setShowCart] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [orderForm, setOrderForm] = useState<OrderForm>({
+    fullName: '',
+    phoneNumber: '',
+    address: '',
+    notes: ''
+  });
+  const [orderSubmitted, setOrderSubmitted] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [addedItems, setAddedItems] = useState<Set<number>>(new Set());
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsLoaded(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentSection]);
+
+  useEffect(() => {
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = language;
+  }, [language]);
+
+  const t = translations[language];
+  const isRTL = language === 'ar';
+
+  const categories = ['all', ...Array.from(new Set(stickers.map(s => s.category)))];
+  
+  const filteredStickers = selectedCategory === 'all' 
+    ? stickers 
+    : stickers.filter(s => s.category === selectedCategory);
+
+  const addToCart = (id: number) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.id === id);
+      if (existing) {
+        return prev.map(item =>
+          item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+      return [...prev, { id, quantity: 1 }];
+    });
+    
+    setAddedItems(prev => new Set([...prev, id]));
+    setTimeout(() => {
+      setAddedItems(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }, 1500);
+  };
+
+  const updateQuantity = (id: number, delta: number) => {
+    setCart(prev => {
+      const updated = prev.map(item => {
+        if (item.id === id) {
+          const newQty = item.quantity + delta;
+          return newQty > 0 ? { ...item, quantity: newQty } : item;
+        }
+        return item;
+      }).filter(item => item.quantity > 0);
+      return updated;
+    });
+  };
+
+  const removeFromCart = (id: number) => {
+    setCart(prev => prev.filter(item => item.id !== id));
+  };
+
+  const getCartTotal = () => {
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const subtotal = cart.reduce((sum, item) => {
+      const sticker = stickers.find(s => s.id === item.id);
+      return sum + (sticker?.price || 0) * item.quantity;
+    }, 0);
+    const discount = totalItems > 20 ? subtotal * 0.1 : 0;
+    return { subtotal, discount, total: subtotal - discount, totalItems };
+  };
+
+  const handlePlaceOrder = () => {
+    if (orderForm.fullName && orderForm.phoneNumber && orderForm.address) {
+      setOrderSubmitted(true);
+      console.log('Order submitted:', { ...orderForm, items: cart, total: getCartTotal() });
+    }
+  };
+
+  const handleNavClick = (section: string) => {
+    setCurrentSection(section);
+    setShowCart(false);
+    setShowCheckout(false);
+  };
+
+  const renderStars = () => (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {Array.from({ length: 50 }).map((_, i) => (
+        <div
+          key={i}
+          className="absolute w-1 h-1 bg-white rounded-full opacity-30 animate-pulse"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 3}s`,
+            animationDuration: `${2 + Math.random() * 2}s`
+          }}
+        />
